@@ -1,0 +1,269 @@
+<%- include('../partials/header', { title: 'Buat Link Booking Baru', isAdmin: true }) %>
+
+<div class="max-w-3xl mx-auto px-4 py-8 sm:py-10">
+  
+  <div class="mb-6 flex items-center justify-between">
+    <div>
+      <a href="/admin" class="text-xs text-amber-700 hover:text-amber-800 font-medium inline-flex items-center space-x-1 mb-2">
+        <span>&larr; Kembali ke Dashboard</span>
+      </a>
+      <h1 class="text-2xl font-bold text-stone-900 tracking-tight">Buat Link Pemesanan Baru</h1>
+      <p class="text-xs text-stone-600 mt-1">Konfigurasikan password, hak akses edit, dan parameter kedaluwarsa link pemesanan.</p>
+    </div>
+  </div>
+
+  <form action="/admin/create-link" method="POST" class="space-y-6">
+    
+    <!-- CARD 1: INFORMASI KLIEN & ACARA -->
+    <div class="tech-sheet p-6 bg-white border border-stone-300 rounded space-y-4">
+      <div class="border-b border-stone-200 pb-3 flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-stone-800">1. Data Pemesan & Rencana Acara</h2>
+        <span class="text-[11px] font-mono text-stone-500">ID Klien</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="client_name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+            Nama Klien / Wedding Organizer <span class="text-red-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="client_name" 
+            name="client_name" 
+            required 
+            placeholder="Contoh: Ibu Rina (Sekar Wedding Organizer)"
+            class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-sans"
+            autofocus
+          >
+        </div>
+
+        <div>
+          <label for="client_phone" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+            Nomor WhatsApp / HP Klien
+          </label>
+          <input 
+            type="text" 
+            id="client_phone" 
+            name="client_phone" 
+            placeholder="Contoh: 081234567890"
+            class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-mono"
+          >
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <div>
+          <label for="event_name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+            Nama / Judul Acara (Bila Sudah Ada)
+          </label>
+          <input 
+            type="text" 
+            id="event_name" 
+            name="event_name" 
+            placeholder="Contoh: Resepsi Pernikahan Dimas & Sarah"
+            class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-sans"
+          >
+        </div>
+
+        <div>
+          <label for="event_type" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+            Kategori Acara Awal
+          </label>
+          <select id="event_type" name="event_type" class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-sans">
+            <option value="">-- Klien yang akan memilih --</option>
+            <option value="Wedding / Pernikahan">Wedding / Pernikahan</option>
+            <option value="Kesenian / Pentas Budaya">Kesenian / Pentas Budaya</option>
+            <option value="Wisuda / Akademik">Wisuda / Akademik</option>
+            <option value="Seminar / Konferensi">Seminar / Konferensi</option>
+            <option value="Konser / Festival Musik">Konser / Festival Musik</option>
+            <option value="Corporate / Gathering">Corporate / Gathering</option>
+            <option value="Pameran / Expo">Pameran / Expo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 2: AUTENTIKASI PASSWORD LINK -->
+    <div class="tech-sheet p-6 bg-white border border-stone-300 rounded space-y-4">
+      <div class="border-b border-stone-200 pb-3 flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-stone-800">2. Password Akses Lembar Booking</h2>
+        <span class="text-[11px] font-mono text-stone-500">Security Isolation</span>
+      </div>
+
+      <div>
+        <label for="link_password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+          Password untuk Klien <span class="text-red-500">*</span>
+        </label>
+        <div class="flex space-x-2">
+          <input 
+            type="text" 
+            id="link_password" 
+            name="link_password" 
+            required 
+            value="<%= suggestedPassword %>"
+            class="flex-grow px-3 py-2 text-sm font-mono border border-stone-300 rounded font-semibold text-amber-800 bg-amber-50"
+          >
+          <button 
+            type="button" 
+            id="btn-gen-pass" 
+            class="bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-medium px-3.5 py-2 rounded transition flex items-center space-x-1.5"
+          >
+            <svg class="w-3.5 h-3.5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Acak Password</span>
+          </button>
+        </div>
+        <p class="text-[11px] text-stone-500 mt-1.5">
+          Password ini yang akan diberikan kepada klien untuk membuka form. Disimpan dengan enkripsi bcrypt.
+        </p>
+      </div>
+    </div>
+
+    <!-- CARD 3: KONTROL EDIT & KEDALUWARSA -->
+    <div class="tech-sheet p-6 bg-white border border-stone-300 rounded space-y-5">
+      <div class="border-b border-stone-200 pb-3 flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-stone-800">3. Izin Revisi & Pengaturan Kedaluwarsa</h2>
+        <span class="text-[11px] font-mono text-stone-500">Access Governance</span>
+      </div>
+
+      <!-- Opsi Edit -->
+      <div class="space-y-3">
+        <label class="inline-flex items-start space-x-2.5 cursor-pointer">
+          <input type="checkbox" name="allow_edit" value="1" checked class="mt-0.5">
+          <div>
+            <span class="text-xs font-bold text-stone-900 block">Izinkan Klien Merevisi Formulir (Allow Edit)</span>
+            <span class="text-[11px] text-stone-500 block">Jika dicentang, klien dapat merevisi pesanan kapan saja selama belum dikunci. Jika tidak dicentang, form langsung menjadi Read-Only setelah 1x submit.</span>
+          </div>
+        </label>
+
+        <label class="inline-flex items-start space-x-2.5 cursor-pointer">
+          <input type="checkbox" name="is_locked" value="1" class="mt-0.5">
+          <div>
+            <span class="text-xs font-bold text-stone-900 block">Kunci Formulir Sekarang (Force Lock)</span>
+            <span class="text-[11px] text-stone-500 block">Kunci langsung formulir sehingga klien hanya bisa melihat Bukti Pemesanan tanpa dapat mengedit.</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="border-t border-stone-200 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Batas Waktu Expired -->
+        <div>
+          <label for="expires_at" class="block text-[11px] font-semibold uppercase text-stone-700 mb-1">
+            Batas Kedaluwarsa (Opsional)
+          </label>
+          <input 
+            type="datetime-local" 
+            id="expires_at" 
+            name="expires_at" 
+            class="w-full px-2.5 py-1.5 text-xs font-mono border border-stone-300 rounded"
+          >
+          <span class="text-[10px] text-stone-400 block mt-1">Kosongkan jika tanpa batas</span>
+        </div>
+
+        <!-- Maksimal Submisi -->
+        <div>
+          <label for="max_submissions" class="block text-[11px] font-semibold uppercase text-stone-700 mb-1">
+            Maks. Submisi Form
+          </label>
+          <input 
+            type="number" 
+            id="max_submissions" 
+            name="max_submissions" 
+            min="0" 
+            value="0" 
+            class="w-full px-2.5 py-1.5 text-xs font-mono border border-stone-300 rounded"
+          >
+          <span class="text-[10px] text-stone-400 block mt-1">0 = Tidak Terbatas</span>
+        </div>
+
+        <!-- Kunci Sebelum Acara -->
+        <div>
+          <label for="lock_before_event_hours" class="block text-[11px] font-semibold uppercase text-stone-700 mb-1">
+            Kunci Otomatis (Jam Sblm Acara)
+          </label>
+          <input 
+            type="number" 
+            id="lock_before_event_hours" 
+            name="lock_before_event_hours" 
+            min="0" 
+            value="24" 
+            class="w-full px-2.5 py-1.5 text-xs font-mono border border-stone-300 rounded"
+          >
+          <span class="text-[10px] text-stone-400 block mt-1">Contoh: 24 jam sebelum hari H</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD 4: PENGATURAN TAMBAHAN FORM (SETTINGS JSON) -->
+    <div class="tech-sheet p-6 bg-white border border-stone-300 rounded space-y-4">
+      <div class="border-b border-stone-200 pb-3 flex items-center justify-between">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-stone-800">4. Pengaturan Form & Catatan Instruksi</h2>
+        <span class="text-[11px] font-mono text-stone-500">Settings JSON</span>
+      </div>
+
+      <div class="space-y-3">
+        <label class="inline-flex items-start space-x-2.5 cursor-pointer">
+          <input type="checkbox" name="allow_custom_items" value="1" checked class="mt-0.5">
+          <div>
+            <span class="text-xs font-bold text-stone-900 block">Izinkan Klien Menambah Item di "Lain-lain"</span>
+            <span class="text-[11px] text-stone-500 block">Klien dapat menambahkan baris custom repeater untuk alat tambahan di luar 10 modul standar.</span>
+          </div>
+        </label>
+
+        <label class="inline-flex items-start space-x-2.5 cursor-pointer">
+          <input type="checkbox" name="require_terms_agreement" value="1" checked class="mt-0.5">
+          <div>
+            <span class="text-xs font-bold text-stone-900 block">Wajibkan Centang Syarat & Ketentuan</span>
+            <span class="text-[11px] text-stone-500 block">Tombol kirim hanya aktif setelah klien mencentang persetujuan ketentuan teknis.</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="pt-2">
+        <label for="client_note" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+          Catatan / Instruksi Khusus untuk Klien (Tampil sebagai Banner di Form)
+        </label>
+        <textarea 
+          id="client_note" 
+          name="client_note" 
+          rows="3" 
+          placeholder="Contoh: Mohon mengisi titik lokasi presisi dan rincian jam mulai loading sound. Untuk videotron wajib konfirmasi posisi panggung."
+          class="w-full px-3 py-2 text-xs border border-stone-300 rounded font-sans"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- SUBMIT BUTTON -->
+    <div class="flex items-center justify-end space-x-3 pt-2">
+      <a href="/admin" class="bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium px-4 py-2.5 rounded transition">
+        Batal
+      </a>
+      <button 
+        type="submit" 
+        class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-6 py-2.5 rounded transition flex items-center space-x-2 shadow-sm"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        <span>Generate & Simpan Link Baru</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  // Simple password generator button
+  document.getElementById('btn-gen-pass').addEventListener('click', () => {
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const numbers = '23456789';
+    let prefix = '';
+    for (let i = 0; i < 3; i++) {
+      prefix += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    let digits = '';
+    for (let i = 0; i < 4; i++) {
+      digits += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+    document.getElementById('link_password').value = `${prefix}-${digits}`;
+  });
+</script>
+
+<%- include('../partials/footer') %>

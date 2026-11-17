@@ -1,0 +1,344 @@
+<%- include('../partials/header', { title: 'Manifest SPK: ' + (link.event_name || link.client_name), isAdmin: true }) %>
+
+<div class="max-w-5xl mx-auto px-4 py-8 sm:py-10">
+  
+  <!-- Back Link & Action Buttons (Hidden on Print) -->
+  <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+    <a href="/admin" class="text-xs text-amber-700 hover:text-amber-800 font-medium inline-flex items-center space-x-1">
+      <span>&larr; Kembali ke Dashboard</span>
+    </a>
+
+    <div class="flex items-center space-x-2">
+      <!-- Print SPK -->
+      <button type="button" onclick="window.print()" class="bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium px-3.5 py-2 rounded transition flex items-center space-x-1.5 shadow-sm">
+        <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        <span>Cetak Manifest SPK</span>
+      </button>
+
+      <!-- Copy WA -->
+      <button 
+        type="button" 
+        class="btn-copy-wa bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-3.5 py-2 rounded transition flex items-center space-x-1.5"
+        data-hash="<%= link.hash_code %>"
+        data-client="<%= link.client_name %>"
+        data-event="<%= link.event_name || 'Event Booking' %>"
+        data-phone="<%= link.client_phone || '' %>"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        <span>Salin Teks WA</span>
+      </button>
+
+      <!-- Open Client Link -->
+      <a href="/?user=<%= link.hash_code %>" target="_blank" class="bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-medium px-3.5 py-2 rounded transition flex items-center space-x-1.5">
+        <svg class="w-4 h-4 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        <span>Buka Link Klien</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Print Sheet Container -->
+  <div class="tech-sheet p-6 sm:p-8 bg-white border border-stone-300 rounded space-y-8">
+    
+    <!-- MANIFEST HEADER -->
+    <div class="border-b-2 border-stone-900 pb-5">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
+            <span class="font-bold text-stone-900">TECHNICAL MANIFEST SHEET & SPK</span>
+            <span>&bull;</span>
+            <span class="text-amber-700 font-bold">REF: <%= link.hash_code %></span>
+          </div>
+          <h1 class="text-2xl font-bold text-stone-900 tracking-tight">
+            <%= link.event_name || 'Manifest Pemesanan Perlengkapan Event' %>
+          </h1>
+          <p class="text-xs text-stone-600 mt-1">
+            Kategori: <strong class="text-stone-900"><%= link.event_type || 'Belum Ditentukan' %></strong>
+          </p>
+        </div>
+
+        <div class="sm:text-right font-mono text-xs space-y-1">
+          <div>
+            <span class="text-stone-500">Status Dokumen:</span>
+            <% if (link.is_locked) { %>
+              <span class="font-bold text-red-700">LOCKED / READ-ONLY</span>
+            <% } else { %>
+              <span class="font-bold text-emerald-700"><%= link.status.toUpperCase() %></span>
+            <% } %>
+          </div>
+          <div class="text-stone-500 text-[11px]">
+            Submisi: <strong class="text-stone-900"><%= link.submission_count %> kali</strong>
+          </div>
+          <div class="text-stone-500 text-[11px]">
+            Dibuat: <%= link.created_at ? link.created_at.slice(0, 19).replace('T', ' ') : '-' %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENT & VENUE INFO GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-stone-50 border border-stone-200 rounded text-xs">
+      <!-- Client Info -->
+      <div class="space-y-2">
+        <h3 class="font-bold uppercase tracking-wider text-stone-800 text-[11px] border-b border-stone-300 pb-1">
+          Identitas Pemesan / WO
+        </h3>
+        <div class="grid grid-cols-3 gap-1">
+          <span class="text-stone-500">Nama Pemesan:</span>
+          <span class="col-span-2 font-bold text-stone-900"><%= link.client_name %></span>
+        </div>
+        <div class="grid grid-cols-3 gap-1">
+          <span class="text-stone-500">WhatsApp / Telp:</span>
+          <span class="col-span-2 font-mono text-stone-900"><%= link.client_phone || '-' %></span>
+        </div>
+        <div class="grid grid-cols-3 gap-1">
+          <span class="text-stone-500">Izin Revisi:</span>
+          <span class="col-span-2 font-mono"><%= link.allow_edit ? 'Bisa Direvisi Klien' : 'Terkunci Setelah 1x Submit' %></span>
+        </div>
+      </div>
+
+      <!-- Venue & Location Info -->
+      <div class="space-y-2">
+        <h3 class="font-bold uppercase tracking-wider text-stone-800 text-[11px] border-b border-stone-300 pb-1">
+          Lokasi Acara & Koordinat
+        </h3>
+        <div class="grid grid-cols-3 gap-1">
+          <span class="text-stone-500">Alamat / Gedung:</span>
+          <span class="col-span-2 font-medium text-stone-900"><%= link.venue_address || link.venue_name || 'Belum diisi klien' %></span>
+        </div>
+        <div class="grid grid-cols-3 gap-1">
+          <span class="text-stone-500">Titik Koordinat:</span>
+          <span class="col-span-2 font-mono text-[11px] text-stone-700">
+            <%= link.latitude && link.longitude ? link.latitude + ', ' + link.longitude : 'Belum ditentukan' %>
+          </span>
+        </div>
+        <% if (link.gmaps_url) { %>
+        <div class="grid grid-cols-3 gap-1">
+          <span class="text-stone-500">Link Google Maps:</span>
+          <span class="col-span-2">
+            <a href="<%= link.gmaps_url %>" target="_blank" rel="noopener noreferrer" class="text-amber-700 hover:underline font-mono text-[11px] break-all">
+              <%= link.gmaps_url %> &rarr;
+            </a>
+          </span>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- JADWAL PELAKSANAAN & RANGKUMAN DURASI -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-stone-900">
+          Jadwal Pelaksanaan & Akumulasi Durasi
+        </h2>
+        <div class="font-mono text-xs text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded border border-amber-300">
+          Total: <strong class="text-amber-900"><%= summary.totalDays %> Hari</strong> &bull; <strong class="text-amber-900"><%= summary.totalHoursHuman %></strong>
+        </div>
+      </div>
+
+      <% if (!summary.schedules || summary.schedules.length === 0) { %>
+        <p class="text-xs text-stone-500 italic py-2">Belum ada tanggal pelaksanaan yang disimpan.</p>
+      <% } else { %>
+        <table class="w-full text-left border-collapse tech-table text-xs">
+          <thead>
+            <tr>
+              <th class="py-2.5 px-3">Hari Ke-</th>
+              <th class="py-2.5 px-3">Tanggal</th>
+              <th class="py-2.5 px-3">Jam Mulai</th>
+              <th class="py-2.5 px-3">Jam Selesai</th>
+              <th class="py-2.5 px-3">Durasi</th>
+              <th class="py-2.5 px-3">Catatan / Aktivitas Hari</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            <% summary.schedules.forEach(sch => { %>
+              <tr>
+                <td class="py-2.5 px-3 font-mono font-bold text-stone-700">HARI <%= sch.dayIndex %></td>
+                <td class="py-2.5 px-3 font-medium text-stone-900"><%= sch.dateFormatted %></td>
+                <td class="py-2.5 px-3 font-mono"><%= sch.startTimeClean %></td>
+                <td class="py-2.5 px-3 font-mono"><%= sch.endTimeClean %></td>
+                <td class="py-2.5 px-3 font-mono">
+                  <span class="font-bold text-amber-800"><%= sch.durationHuman %></span>
+                  <% if (sch.isCrossMidnight) { %>
+                    <span class="text-[10px] text-stone-400 block">(Lintas Tengah Malam)</span>
+                  <% } %>
+                </td>
+                <td class="py-2.5 px-3 text-stone-700 font-sans"><%= sch.day_note || '-' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+          <tfoot>
+            <tr class="bg-stone-100 font-bold text-stone-900 text-xs">
+              <td colspan="4" class="py-2.5 px-3 text-right uppercase tracking-wider">Total Akumulasi Durasi Acara:</td>
+              <td colspan="2" class="py-2.5 px-3 font-mono text-amber-900 text-sm">
+                <%= summary.totalHoursHuman %> (<%= summary.totalHoursDecimal %> Jam)
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- MANIFEST PERLENGKAPAN EVENT (11 KATEGORI) -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-stone-900">
+          Manifest Rincian Perlengkapan Event
+        </h2>
+        <span class="font-mono text-xs text-stone-500"><%= items.length %> Modul / Item Dipesan</span>
+      </div>
+
+      <% if (!items || items.length === 0) { %>
+        <p class="text-xs text-stone-500 italic py-2">Belum ada perlengkapan yang dipilih oleh pemesan.</p>
+      <% } else { %>
+        <table class="w-full text-left border-collapse tech-table text-xs">
+          <thead>
+            <tr>
+              <th class="py-2.5 px-3 w-1/4">Kategori & Nama Item</th>
+              <th class="py-2.5 px-3 w-1/5">Jumlah / Dimensi</th>
+              <th class="py-2.5 px-3 w-1/4">Atribut Teknis</th>
+              <th class="py-2.5 px-3">Keterangan Teknis (Wajib)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            <% items.forEach(item => { %>
+              <tr class="hover:bg-stone-50">
+                <!-- Item Name & Category -->
+                <td class="py-2.5 px-3">
+                  <strong class="text-stone-900 block"><%= item.item_label %></strong>
+                  <span class="text-[10px] font-mono text-stone-500 uppercase"><%= item.category_key %></span>
+                </td>
+
+                <!-- Qty -->
+                <td class="py-2.5 px-3 font-mono font-bold text-stone-800">
+                  <%= item.qty_text %>
+                </td>
+
+                <!-- Attributes -->
+                <td class="py-2.5 px-3 text-[11px]">
+                  <% 
+                    let attr = item.attributes;
+                    if (typeof attr === 'string') {
+                      try { attr = JSON.parse(attr); } catch(e) { attr = {}; }
+                    }
+                    attr = attr || {};
+                  %>
+                  <% if (attr.include_genset !== undefined) { %>
+                    <div class="font-mono">
+                      Include Genset: <strong class="<%= attr.include_genset === 'Ya' || attr.include_genset === true ? 'text-emerald-700' : 'text-stone-500' %>"><%= attr.include_genset === 'Ya' || attr.include_genset === true ? 'Ya' : 'Tidak' %></strong>
+                    </div>
+                  <% } %>
+                  <% if (attr.include_cover !== undefined) { %>
+                    <div class="font-mono">
+                      Cover: <strong class="<%= attr.include_cover === 'Ya' || attr.include_cover === true ? 'text-emerald-700' : 'text-stone-500' %>"><%= attr.include_cover === 'Ya' || attr.include_cover === true ? 'Ya' : 'Tidak' %></strong>
+                      <% if (attr.include_cover === 'Ya' || attr.include_cover === true) { %>
+                        <span class="block text-stone-600">
+                          Cakupan: <%= attr.cover_scope === 'partial' ? 'Sebagian (' + attr.cover_qty + ' unit)' : 'Semua Unit (100%)' %>
+                        </span>
+                      <% } %>
+                    </div>
+                  <% } %>
+                  <% if (Object.keys(attr).length === 0) { %>
+                    <span class="text-stone-400">-</span>
+                  <% } %>
+                </td>
+
+                <!-- Notes (Mandatory Specs) -->
+                <td class="py-2.5 px-3 text-stone-800 font-sans leading-relaxed">
+                  <%= item.notes || '-' %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- TANDA TANGAN / PENGESAHAN MANIFEST (PRINT ONLY) -->
+    <div class="print-only hidden pt-12 text-xs">
+      <div class="grid grid-cols-3 gap-6 text-center">
+        <div>
+          <p class="font-semibold text-stone-700 mb-16">Pihak Pemesan / WO</p>
+          <div class="border-b border-stone-400 w-36 mx-auto"></div>
+          <p class="mt-1 font-mono">( <%= link.client_name %> )</p>
+        </div>
+        <div>
+          <p class="font-semibold text-stone-700 mb-16">Koordinator Loading</p>
+          <div class="border-b border-stone-400 w-36 mx-auto"></div>
+          <p class="mt-1 font-mono">( ................................... )</p>
+        </div>
+        <div>
+          <p class="font-semibold text-stone-700 mb-16">Pimpinan Produksi</p>
+          <div class="border-b border-stone-400 w-36 mx-auto"></div>
+          <p class="mt-1 font-mono">( ................................... )</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG AKTIVITAS & AUDIT TRAIL (HIDDEN ON PRINT) -->
+    <div class="no-print space-y-3 pt-6 border-t border-stone-200">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">
+        Audit Trail & Log Aktivitas Link
+      </h3>
+      <% if (!logs || logs.length === 0) { %>
+        <p class="text-xs text-stone-400 italic">Belum ada riwayat aktivitas tercatat.</p>
+      <% } else { %>
+        <table class="w-full text-left border-collapse tech-table text-[11px] font-mono">
+          <thead>
+            <tr>
+              <th class="py-2 px-3">Waktu (WIB)</th>
+              <th class="py-2 px-3">Aksi</th>
+              <th class="py-2 px-3">Alamat IP</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            <% logs.forEach(log => { %>
+              <tr>
+                <td class="py-1.5 px-3 text-stone-600"><%= log.created_at ? log.created_at.slice(0, 19).replace('T', ' ') : '-' %></td>
+                <td class="py-1.5 px-3">
+                  <span class="font-bold <%= log.action === 'login_success' ? 'text-emerald-700' : (log.action === 'login_failed' ? 'text-red-700' : 'text-stone-800') %>">
+                    <%= log.action %>
+                  </span>
+                </td>
+                <td class="py-1.5 px-3 text-stone-500"><%= log.ip_address || '-' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal for WhatsApp Invitation Text Display -->
+<div id="wa-modal" class="fixed inset-0 bg-stone-900 bg-opacity-60 z-50 flex items-center justify-center p-4 hidden no-print">
+  <div class="tech-sheet bg-white border border-stone-300 rounded max-w-lg w-full p-6">
+    <div class="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
+      <div class="flex items-center space-x-2">
+        <svg class="w-5 h-5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        <h3 class="text-sm font-bold text-stone-900 uppercase">Teks Undangan WhatsApp</h3>
+      </div>
+      <button type="button" id="btn-close-wa-modal" class="text-stone-400 hover:text-stone-700">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <textarea id="wa-text-area" rows="8" readonly class="w-full p-3 font-mono text-xs border border-stone-300 rounded bg-stone-50 text-stone-800 select-all"></textarea>
+
+    <div class="mt-4 flex items-center justify-between">
+      <span id="wa-copied-status" class="text-xs text-emerald-700 font-semibold opacity-0 transition-opacity">Teks berhasil disalin ke clipboard!</span>
+      <div class="flex space-x-2">
+        <button type="button" id="btn-copy-clipboard" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded transition">
+          Salin ke Clipboard
+        </button>
+        <a id="btn-open-wa" href="#" target="_blank" class="bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium px-4 py-2 rounded transition">
+          Buka WhatsApp Web
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/adminDashboard.js"></script>
+
+<%- include('../partials/footer') %>

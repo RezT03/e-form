@@ -1,0 +1,936 @@
+<%- include('../partials/header', { title: (isReadOnly ? 'Bukti Pemesanan: ' : 'Lembar Pemesanan: ') + (link.event_name || link.client_name) }) %>
+
+<div class="max-w-5xl mx-auto px-4 py-8 sm:py-10">
+  
+  <!-- Alert Banner if Flash Message exists -->
+  <% if (typeof flashSuccess !== 'undefined' && flashSuccess) { %>
+    <div class="mb-6 bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded text-sm flex items-start space-x-2">
+      <svg class="w-5 h-5 text-emerald-700 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <div>
+        <span class="font-semibold">Berhasil Disimpan!</span>
+        <p class="text-xs text-emerald-800 mt-0.5"><%= flashSuccess %></p>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Admin Instruction / Client Note Banner -->
+  <% if (link.settings && link.settings.client_note) { %>
+    <div class="mb-6 bg-amber-50 border-l-4 border-amber-600 p-4 rounded-r border-t border-b border-r border-amber-200">
+      <div class="flex items-start space-x-2.5">
+        <svg class="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Catatan dari Tim Produksi</span>
+          <p class="text-xs text-stone-800 mt-1 leading-relaxed"><%= link.settings.client_note %></p>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Form Manifest Header Card -->
+  <div class="tech-sheet p-6 sm:p-8 bg-white border border-stone-300 rounded mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200 pb-5">
+      <div>
+        <div class="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
+          <span>EVENT PRODUCTION MANIFEST</span>
+          <span>&bull;</span>
+          <span class="font-bold text-amber-700">HASH: <%= link.hash_code %></span>
+        </div>
+        <h1 class="text-2xl font-bold text-stone-900 tracking-tight">
+          <%= link.event_name || 'Lembar Spesifikasi Pemesanan Perlengkapan' %>
+        </h1>
+        <p class="text-xs text-stone-600 mt-1">
+          Pemesan: <strong class="text-stone-900"><%= link.client_name %></strong>
+          <% if (link.client_phone) { %> &bull; Telp: <span class="font-mono"><%= link.client_phone %></span><% } %>
+        </p>
+      </div>
+
+      <div class="flex flex-col sm:items-end gap-2">
+        <!-- Status Badge -->
+        <% if (isReadOnly) { %>
+          <div class="inline-flex items-center space-x-1.5 px-3 py-1 bg-stone-100 text-stone-800 border border-stone-300 rounded text-xs font-mono font-medium">
+            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+            <span>READ-ONLY / BUKTI PEMESANAN</span>
+          </div>
+          <button type="button" onclick="window.print()" class="no-print bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium px-3.5 py-2 rounded transition flex items-center space-x-1.5 shadow-sm">
+            <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            <span>Cetak Bukti Pemesanan (Print SPK)</span>
+          </button>
+        <% } else { %>
+          <div class="inline-flex items-center space-x-1.5 px-3 py-1 bg-amber-50 text-amber-800 border border-amber-300 rounded text-xs font-mono font-medium">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span>MODE PENGISIAN AKTIF</span>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Read-Only Banner Notice if applicable -->
+    <% if (isReadOnly && readOnlyReason) { %>
+      <div class="mt-4 p-3 bg-stone-50 border border-stone-200 rounded text-xs text-stone-700 flex items-center space-x-2">
+        <svg class="w-4 h-4 text-stone-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span><%= readOnlyReason %></span>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Form Begins -->
+  <form id="booking-form" action="/submit?user=<%= link.hash_code %>" method="POST" class="space-y-8">
+    <input type="hidden" name="user_code" value="<%= link.hash_code %>">
+    <input type="hidden" id="geo-lat" name="latitude" value="<%= link.latitude || '' %>">
+    <input type="hidden" id="geo-lng" name="longitude" value="<%= link.longitude || '' %>">
+
+    <!-- ========================================== -->
+    <!-- BAGIAN 1: INFORMASI DASAR ACARA -->
+    <!-- ========================================== -->
+    <section class="tech-sheet p-6 sm:p-8 bg-white border border-stone-300 rounded">
+      <div class="flex items-center space-x-2.5 pb-4 mb-6 border-b border-stone-200">
+        <span class="w-6 h-6 rounded bg-stone-900 text-white font-mono text-xs flex items-center justify-center font-bold">1</span>
+        <h2 class="text-base font-bold text-stone-900 tracking-tight">Informasi Dasar Acara</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+        <!-- Jenis Acara -->
+        <div>
+          <label for="event_type_select" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+            Jenis Acara <span class="text-red-500">*</span>
+          </label>
+          <% 
+            const standardTypes = [
+              'Wedding / Pernikahan',
+              'Kesenian / Pentas Budaya',
+              'Wisuda / Akademik',
+              'Seminar / Konferensi',
+              'Konser / Festival Musik',
+              'Corporate / Gathering',
+              'Pameran / Expo'
+            ];
+            const currentType = link.event_type || '';
+            const isCustomType = currentType && !standardTypes.includes(currentType);
+          %>
+          <select 
+            id="event_type_select" 
+            name="event_type_select" 
+            required 
+            class="w-full px-3 py-2 text-sm border border-stone-300 rounded"
+            <%= isReadOnly ? 'disabled' : '' %>
+          >
+            <option value="">-- Pilih Jenis Acara --</option>
+            <% standardTypes.forEach(t => { %>
+              <option value="<%= t %>" <%= currentType === t ? 'selected' : '' %>><%= t %></option>
+            <% }); %>
+            <option value="Lainnya" <%= isCustomType || currentType === 'Lainnya' ? 'selected' : '' %>>Lainnya (Tentukan Sendiri)</option>
+          </select>
+          
+          <!-- Custom event type input (shown when Lainnya is selected) -->
+          <div id="custom-event-type-wrapper" class="mt-2.5 <%= isCustomType || currentType === 'Lainnya' ? '' : 'hidden' %>">
+            <input 
+              type="text" 
+              id="event_type_custom" 
+              name="event_type_custom" 
+              placeholder="Tuliskan jenis acara Anda..."
+              value="<%= isCustomType ? currentType : '' %>"
+              class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-sans"
+              <%= isReadOnly ? 'readonly' : '' %>
+            >
+          </div>
+        </div>
+
+        <!-- Nama Acara / Judul Event -->
+        <div>
+          <label for="event_name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+            Nama Acara / Judul Event <span class="text-red-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="event_name" 
+            name="event_name" 
+            required 
+            placeholder="Contoh: Resepsi Pernikahan Dimas & Sarah"
+            value="<%= link.event_name || '' %>"
+            class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-sans"
+            <%= isReadOnly ? 'readonly' : '' %>
+          >
+        </div>
+      </div>
+
+      <!-- Lokasi Acara: Hybrid Search + Google Maps -->
+      <div class="space-y-4 pt-3 border-t border-stone-100">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+            Lokasi Acara & Titik Peta
+          </label>
+          <span class="text-[11px] text-stone-500 font-mono">OpenStreetMap Nominatim + Leaflet</span>
+        </div>
+
+        <!-- Search Bar Nominatim (hidden in readonly mode) -->
+        <% if (!isReadOnly) { %>
+          <div class="relative">
+            <div class="flex space-x-2">
+              <div class="relative flex-grow">
+                <input 
+                  type="text" 
+                  id="search-location" 
+                  placeholder="Ketik nama gedung, hotel, atau alamat (misal: Balai Kartini, Jakarta)..."
+                  class="w-full pl-9 pr-3 py-2 text-sm border border-stone-300 rounded"
+                  autocomplete="off"
+                >
+                <svg class="w-4 h-4 text-stone-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </div>
+              <button 
+                type="button" 
+                id="btn-search-location" 
+                class="bg-stone-800 hover:bg-stone-900 text-white text-xs px-4 py-2 rounded font-medium transition flex items-center space-x-1.5"
+              >
+                <span>Cari</span>
+              </button>
+            </div>
+            <!-- Search Results Dropdown -->
+            <ul id="search-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-stone-300 rounded shadow-md z-30 max-h-48 overflow-y-auto text-xs divide-y divide-stone-100">
+            </ul>
+          </div>
+        <% } %>
+
+        <!-- Leaflet Map Container -->
+        <div class="relative">
+          <div id="map-container"></div>
+          <div class="mt-1 flex items-center justify-between text-[11px] text-stone-500 font-mono">
+            <span>Koordinat: <span id="coord-display"><%= link.latitude && link.longitude ? link.latitude + ', ' + link.longitude : 'Belum ditentukan' %></span></span>
+            <% if (!isReadOnly) { %>
+              <span class="text-stone-400 text-right">Geser penanda pin untuk menyesuaikan titik</span>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <!-- Nama Gedung / Alamat Lengkap -->
+          <div>
+            <label for="venue_address" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+              Nama Gedung & Alamat Lengkap <span class="text-red-500">*</span>
+            </label>
+            <textarea 
+              id="venue_address" 
+              name="venue_address" 
+              rows="3" 
+              required
+              placeholder="Contoh: Gedung Serbaguna Garuda, Jl. Sudirman No. 45, Jakarta Pusat"
+              class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-sans"
+              <%= isReadOnly ? 'readonly' : '' %>
+            ><%= link.venue_address || link.venue_name || '' %></textarea>
+          </div>
+
+          <!-- Input Link Google Maps -->
+          <div>
+            <label for="gmaps_url" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1.5">
+              Link Google Maps (Tautan Share Lokasi)
+            </label>
+            <input 
+              type="url" 
+              id="gmaps_url" 
+              name="gmaps_url" 
+              placeholder="https://maps.app.goo.gl/..."
+              value="<%= link.gmaps_url || '' %>"
+              class="w-full px-3 py-2 text-sm border border-stone-300 rounded font-mono text-xs"
+              <%= isReadOnly ? 'readonly' : '' %>
+            >
+            <p class="text-[11px] text-stone-500 mt-1">
+              Tempel tautan share location Google Maps atau WhatsApp share lokasi agar kru loading dapat navigasi presisi.
+            </p>
+            <% if (link.gmaps_url) { %>
+              <a href="<%= link.gmaps_url %>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1 text-xs text-amber-700 hover:text-amber-800 font-medium mt-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                <span>Buka di Google Maps &rarr;</span>
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- BAGIAN 2: TANGGAL & WAKTU PELAKSANAAN -->
+    <!-- ========================================== -->
+    <section class="tech-sheet p-6 sm:p-8 bg-white border border-stone-300 rounded">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-stone-200 gap-3">
+        <div class="flex items-center space-x-2.5">
+          <span class="w-6 h-6 rounded bg-stone-900 text-white font-mono text-xs flex items-center justify-center font-bold">2</span>
+          <h2 class="text-base font-bold text-stone-900 tracking-tight">Tanggal & Waktu Pelaksanaan</h2>
+        </div>
+
+        <!-- Mode Pemilihan Single / Multi-Day -->
+        <% if (!isReadOnly) { %>
+          <div class="inline-flex items-center space-x-4 text-xs font-medium bg-stone-100 p-1.5 rounded border border-stone-300">
+            <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+              <input type="radio" name="day_mode" value="single" <%= schedules.length <= 1 ? 'checked' : '' %> class="text-amber-600">
+              <span>1 Hari</span>
+            </label>
+            <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+              <input type="radio" name="day_mode" value="multi" <%= schedules.length > 1 ? 'checked' : '' %> class="text-amber-600">
+              <span>Lebih dari 1 Hari (Multi-Day)</span>
+            </label>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Container Baris Jadwal -->
+      <div id="schedule-container" class="space-y-3.5 mb-5">
+        <% 
+          const currentSchedules = schedules && schedules.length > 0 ? schedules : [
+            { event_date: '', start_time: '08:00', end_time: '17:00', day_note: 'Acara Utama', duration_minutes: 540 }
+          ];
+        %>
+        <% currentSchedules.forEach((sch, idx) => { %>
+          <div class="schedule-row bg-stone-50 border border-stone-300 rounded p-4 relative" data-index="<%= idx %>">
+            <div class="flex items-center justify-between mb-3 text-xs">
+              <span class="font-mono font-bold text-stone-700 uppercase tracking-wider day-badge">
+                HARI KE-<%= idx + 1 %>
+              </span>
+              <div class="flex items-center space-x-3">
+                <span class="font-mono text-xs text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded border border-amber-300 row-duration">
+                  Durasi: Menghitung...
+                </span>
+                <% if (!isReadOnly) { %>
+                  <button type="button" class="btn-remove-day text-stone-400 hover:text-red-600 <%= currentSchedules.length <= 1 ? 'hidden' : '' %>" title="Hapus Tanggal">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                <% } %>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+              <div>
+                <label class="block text-[11px] font-semibold uppercase text-stone-600 mb-1">
+                  Tanggal <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  name="schedule_date[]" 
+                  required 
+                  value="<%= sch.event_date ? (typeof sch.event_date === 'string' ? sch.event_date.slice(0, 10) : sch.event_date.toISOString().slice(0, 10)) : '' %>"
+                  class="w-full px-2.5 py-2 text-xs font-mono border border-stone-300 rounded"
+                  <%= isReadOnly ? 'readonly' : '' %>
+                >
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold uppercase text-stone-600 mb-1">
+                  Jam Mulai <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  type="time" 
+                  name="schedule_start[]" 
+                  required 
+                  value="<%= (sch.start_time || '08:00').slice(0, 5) %>"
+                  class="w-full px-2.5 py-2 text-xs font-mono border border-stone-300 rounded time-input"
+                  <%= isReadOnly ? 'readonly' : '' %>
+                >
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold uppercase text-stone-600 mb-1">
+                  Jam Selesai <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  type="time" 
+                  name="schedule_end[]" 
+                  required 
+                  value="<%= (sch.end_time || '17:00').slice(0, 5) %>"
+                  class="w-full px-2.5 py-2 text-xs font-mono border border-stone-300 rounded time-input"
+                  <%= isReadOnly ? 'readonly' : '' %>
+                >
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold uppercase text-stone-600 mb-1">
+                  Catatan Hari (Opsional)
+                </label>
+                <input 
+                  type="text" 
+                  name="schedule_note[]" 
+                  placeholder="Misal: Loading, Gladi Bersih, Acara Inti"
+                  value="<%= sch.day_note || '' %>"
+                  class="w-full px-2.5 py-2 text-xs border border-stone-300 rounded font-sans"
+                  <%= isReadOnly ? 'readonly' : '' %>
+                >
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Add Day Button (Multi-Day only) -->
+      <% if (!isReadOnly) { %>
+        <div id="btn-add-day-wrapper" class="mb-5 <%= schedules.length <= 1 ? 'hidden' : '' %>">
+          <button 
+            type="button" 
+            id="btn-add-day" 
+            class="bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-medium px-3.5 py-2 rounded transition flex items-center space-x-1.5"
+          >
+            <svg class="w-3.5 h-3.5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>+ Tambah Tanggal Pelaksanaan</span>
+          </button>
+        </div>
+      <% } %>
+
+      <!-- Live Duration Summary Banner -->
+      <div class="bg-stone-900 text-stone-100 rounded p-4 font-mono text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-stone-800">
+        <div class="flex items-center space-x-3">
+          <svg class="w-5 h-5 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <div>
+            <span class="text-stone-400 uppercase text-[10px] tracking-wider block">Kalkulasi Otomatis Durasi</span>
+            <span id="summary-total-days" class="font-bold text-white"><%= schedules.length || 1 %> Hari Pelaksanaan</span>
+          </div>
+        </div>
+        <div class="sm:text-right border-t sm:border-t-0 border-stone-800 pt-2 sm:pt-0 w-full sm:w-auto">
+          <span class="text-stone-400 uppercase text-[10px] tracking-wider block">Total Akumulasi Durasi</span>
+          <span id="summary-total-hours" class="text-base font-bold text-amber-400">0 Jam</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- BAGIAN 3: DAFTAR PERLENGKAPAN EVENT (11 KATEGORI) -->
+    <!-- ========================================== -->
+    <section class="tech-sheet p-6 sm:p-8 bg-white border border-stone-300 rounded">
+      <div class="pb-4 mb-6 border-b border-stone-200">
+        <div class="flex items-center space-x-2.5">
+          <span class="w-6 h-6 rounded bg-stone-900 text-white font-mono text-xs flex items-center justify-center font-bold">3</span>
+          <h2 class="text-base font-bold text-stone-900 tracking-tight">Daftar Perlengkapan Event (11 Kategori)</h2>
+        </div>
+        <p class="text-xs text-stone-500 mt-1">
+          Centang modul perlengkapan yang dibutuhkan. <strong class="text-stone-800">Setiap perlengkapan yang dipilih wajib mengisi kolom Keterangan</strong> (spesifikasi/ukuran/catatan teknis).
+        </p>
+      </div>
+
+      <% 
+        // Helper to find existing items by category key
+        function getItem(key) {
+          if (!items || !items.length) return null;
+          return items.find(it => it.category_key === key);
+        }
+        function getItems(key) {
+          if (!items || !items.length) return [];
+          return items.filter(it => it.category_key === key);
+        }
+      %>
+
+      <div class="space-y-4">
+        
+        <!-- 1. SOUND SYSTEM -->
+        <% const soundItem = getItem('sound_system'); const soundAttr = soundItem && soundItem.attributes ? soundItem.attributes : {}; %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_sound_system" value="1" <%= soundItem ? 'checked' : '' %> class="cat-toggle" data-target="body-sound" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">1. Sound System</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Audio Management</span>
+          </div>
+          <div id="body-sound" class="p-4 bg-white <%= soundItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah / Paket <span class="text-red-500">*</span></label>
+                <input type="text" name="sound_qty" placeholder="Misal: 1 Paket - 10.000 Watt" value="<%= soundItem ? soundItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+              </div>
+              <div>
+                <label class="block font-semibold uppercase text-stone-700 mb-1">Include Genset? <span class="text-red-500">*</span></label>
+                <select name="sound_genset" class="w-full px-3 py-2 border border-stone-300 rounded" <%= isReadOnly ? 'disabled' : '' %>>
+                  <option value="Tidak" <%= soundAttr.include_genset === false || soundAttr.include_genset === 'Tidak' ? 'selected' : '' %>>Tidak</option>
+                  <option value="Ya" <%= soundAttr.include_genset === true || soundAttr.include_genset === 'Ya' ? 'selected' : '' %>>Ya (Include Genset Sound)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="sound_notes" rows="2" placeholder="Catatan spesifikasi: jumlah mic wireless, monitor panggung, dll." class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= soundItem ? soundItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. LED SCREEN / VIDEOTRON -->
+        <% const ledItem = getItem('led_screen'); const ledAttr = ledItem && ledItem.attributes ? ledItem.attributes : {}; %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_led_screen" value="1" <%= ledItem ? 'checked' : '' %> class="cat-toggle" data-target="body-led" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">2. LED Screen / Videotron</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Visual Display</span>
+          </div>
+          <div id="body-led" class="p-4 bg-white <%= ledItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah / Dimensi <span class="text-red-500">*</span></label>
+                <input type="text" name="led_qty" placeholder="Misal: 1 Set - 3x4 Meter P3.9" value="<%= ledItem ? ledItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+              </div>
+              <div>
+                <label class="block font-semibold uppercase text-stone-700 mb-1">Include Genset? <span class="text-red-500">*</span></label>
+                <select name="led_genset" class="w-full px-3 py-2 border border-stone-300 rounded" <%= isReadOnly ? 'disabled' : '' %>>
+                  <option value="Tidak" <%= ledAttr.include_genset === false || ledAttr.include_genset === 'Tidak' ? 'selected' : '' %>>Tidak</option>
+                  <option value="Ya" <%= ledAttr.include_genset === true || ledAttr.include_genset === 'Ya' ? 'selected' : '' %>>Ya (Include Genset Videotron)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="led_notes" rows="2" placeholder="Catatan spesifikasi: indoor/outdoor, video processor, switcher, posisi instalasi" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= ledItem ? ledItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. TENDA (TRATAK) -->
+        <% const tendaItem = getItem('tenda'); %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_tenda" value="1" <%= tendaItem ? 'checked' : '' %> class="cat-toggle" data-target="body-tenda" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">3. Tenda (Tratak)</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Shade & Canopy</span>
+          </div>
+          <div id="body-tenda" class="p-4 bg-white <%= tendaItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah / Ukuran <span class="text-red-500">*</span></label>
+              <input type="text" name="tenda_qty" placeholder="Misal: 4 Plong / 6x12 Meter" value="<%= tendaItem ? tendaItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="tenda_notes" rows="2" placeholder="Catatan: dekorasi plafon serut/datar, warna kain (putih-gold), tirai samping, dll." class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= tendaItem ? tendaItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. PANGGUNG RIGGING -->
+        <% const riggingItem = getItem('panggung_rigging'); %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_panggung_rigging" value="1" <%= riggingItem ? 'checked' : '' %> class="cat-toggle" data-target="body-rigging" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">4. Panggung Rigging</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Heavy Stage Truss</span>
+          </div>
+          <div id="body-rigging" class="p-4 bg-white <%= riggingItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah / Ukuran <span class="text-red-500">*</span></label>
+              <input type="text" name="rigging_qty" placeholder="Misal: 1 Set - 8x6 Meter (Tinggi Tiang 6m)" value="<%= riggingItem ? riggingItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="rigging_notes" rows="2" placeholder="Catatan: terpal atap rigging, sayap sound (flying), backdrop ram, tangga" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= riggingItem ? riggingItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. PANGGUNG (NON-RIGGING / LEVEL) -->
+        <% const levelItem = getItem('panggung'); %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_panggung" value="1" <%= levelItem ? 'checked' : '' %> class="cat-toggle" data-target="body-level" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">5. Panggung (Non-Rigging / Level)</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Indoor / Acoustic Stage</span>
+          </div>
+          <div id="body-level" class="p-4 bg-white <%= levelItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah / Ukuran <span class="text-red-500">*</span></label>
+              <input type="text" name="panggung_qty" placeholder="Misal: 1 Set - 6x4 Meter, Tinggi 60cm" value="<%= levelItem ? levelItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="panggung_notes" rows="2" placeholder="Catatan: karpet hitam/merah, skirting panggung, mini trap tangga" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= levelItem ? levelItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. KURSI (MULTI-TIPE BERSYARAT: FUTURA, PLASTIK, SOFA) -->
+        <% 
+          const futuraItem = getItem('kursi_futura'); const futuraAttr = futuraItem && futuraItem.attributes ? futuraItem.attributes : {};
+          const plastikItem = getItem('kursi_plastik'); const plastikAttr = plastikItem && plastikItem.attributes ? plastikItem.attributes : {};
+          const sofaItem = getItem('kursi_sofa');
+          const hasAnyKursi = Boolean(futuraItem || plastikItem || sofaItem);
+        %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_kursi" value="1" <%= hasAnyKursi ? 'checked' : '' %> class="cat-toggle" data-target="body-kursi" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">6. Kursi (Multi-Tipe: Futura / Plastik / Sofa)</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Seating & Covers</span>
+          </div>
+          <div id="body-kursi" class="p-4 bg-white <%= hasAnyKursi ? '' : 'hidden' %> space-y-4 text-xs">
+            <p class="text-stone-500 text-[11px]">Anda dapat memilih satu atau lebih tipe kursi di bawah ini:</p>
+
+            <!-- A. Kursi Futura -->
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded space-y-3">
+              <label class="inline-flex items-center space-x-2 font-semibold text-stone-800 cursor-pointer">
+                <input type="checkbox" name="kursi_futura_check" value="1" <%= futuraItem ? 'checked' : '' %> class="kursi-sub-toggle" data-target="sub-futura" <%= isReadOnly ? 'disabled' : '' %>>
+                <span>A. Kursi Futura</span>
+              </label>
+
+              <div id="sub-futura" class="<%= futuraItem ? '' : 'hidden' %> space-y-3 pl-4 border-l-2 border-stone-300">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Unit <span class="text-red-500">*</span></label>
+                    <input type="number" id="futura_qty" name="futura_qty" min="1" placeholder="Misal: 100" value="<%= futuraItem ? futuraItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                  </div>
+                  <div>
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Include Cover? <span class="text-red-500">*</span></label>
+                    <select id="futura_cover" name="futura_cover" class="w-full px-3 py-2 border border-stone-300 rounded cover-select" data-scope-target="futura-scope-wrapper" <%= isReadOnly ? 'disabled' : '' %>>
+                      <option value="Tidak" <%= futuraAttr.include_cover === false || futuraAttr.include_cover === 'Tidak' ? 'selected' : '' %>>Tidak</option>
+                      <option value="Ya" <%= futuraAttr.include_cover === true || futuraAttr.include_cover === 'Ya' ? 'selected' : '' %>>Ya</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Conditional Cover Scope for Futura -->
+                <div id="futura-scope-wrapper" class="space-y-3 <%= futuraAttr.include_cover === true || futuraAttr.include_cover === 'Ya' ? '' : 'hidden' %> bg-white p-3 border border-stone-200 rounded">
+                  <label class="block font-semibold uppercase text-stone-600">Cakupan Cover Futura</label>
+                  <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                      <input type="radio" name="futura_cover_scope" value="all" <%= !futuraAttr.cover_scope || futuraAttr.cover_scope === 'all' ? 'checked' : '' %> class="cover-scope-radio" data-partial-target="futura-partial-wrapper" <%= isReadOnly ? 'disabled' : '' %>>
+                      <span>Semua Dicover (<span id="futura-cover-all-label">100%</span>)</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                      <input type="radio" name="futura_cover_scope" value="partial" <%= futuraAttr.cover_scope === 'partial' ? 'checked' : '' %> class="cover-scope-radio" data-partial-target="futura-partial-wrapper" <%= isReadOnly ? 'disabled' : '' %>>
+                      <span>Sebagian Dicover</span>
+                    </label>
+                  </div>
+                  <div id="futura-partial-wrapper" class="<%= futuraAttr.cover_scope === 'partial' ? '' : 'hidden' %>">
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Kursi yang Dicover <span class="text-red-500">*</span></label>
+                    <input type="number" id="futura_cover_qty" name="futura_cover_qty" min="1" placeholder="Jumlah cover (maksimal sesuai unit)" value="<%= futuraAttr.cover_qty || '' %>" class="w-full sm:w-60 px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan Futura <span class="text-red-500">*</span></label>
+                  <input type="text" name="futura_notes" placeholder="Warna cover (putih/hitam), pita kursi, posisi penataan" value="<%= futuraItem ? futuraItem.notes : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+                </div>
+              </div>
+            </div>
+
+            <!-- B. Kursi Plastik -->
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded space-y-3">
+              <label class="inline-flex items-center space-x-2 font-semibold text-stone-800 cursor-pointer">
+                <input type="checkbox" name="kursi_plastik_check" value="1" <%= plastikItem ? 'checked' : '' %> class="kursi-sub-toggle" data-target="sub-plastik" <%= isReadOnly ? 'disabled' : '' %>>
+                <span>B. Kursi Plastik</span>
+              </label>
+
+              <div id="sub-plastik" class="<%= plastikItem ? '' : 'hidden' %> space-y-3 pl-4 border-l-2 border-stone-300">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Unit <span class="text-red-500">*</span></label>
+                    <input type="number" id="plastik_qty" name="plastik_qty" min="1" placeholder="Misal: 200" value="<%= plastikItem ? plastikItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                  </div>
+                  <div>
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Include Cover? <span class="text-red-500">*</span></label>
+                    <select id="plastik_cover" name="plastik_cover" class="w-full px-3 py-2 border border-stone-300 rounded cover-select" data-scope-target="plastik-scope-wrapper" <%= isReadOnly ? 'disabled' : '' %>>
+                      <option value="Tidak" <%= plastikAttr.include_cover === false || plastikAttr.include_cover === 'Tidak' ? 'selected' : '' %>>Tidak</option>
+                      <option value="Ya" <%= plastikAttr.include_cover === true || plastikAttr.include_cover === 'Ya' ? 'selected' : '' %>>Ya</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Conditional Cover Scope for Plastik -->
+                <div id="plastik-scope-wrapper" class="space-y-3 <%= plastikAttr.include_cover === true || plastikAttr.include_cover === 'Ya' ? '' : 'hidden' %> bg-white p-3 border border-stone-200 rounded">
+                  <label class="block font-semibold uppercase text-stone-600">Cakupan Cover Plastik</label>
+                  <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                      <input type="radio" name="plastik_cover_scope" value="all" <%= !plastikAttr.cover_scope || plastikAttr.cover_scope === 'all' ? 'checked' : '' %> class="cover-scope-radio" data-partial-target="plastik-partial-wrapper" <%= isReadOnly ? 'disabled' : '' %>>
+                      <span>Semua Dicover (<span id="plastik-cover-all-label">100%</span>)</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-1.5 cursor-pointer">
+                      <input type="radio" name="plastik_cover_scope" value="partial" <%= plastikAttr.cover_scope === 'partial' ? 'checked' : '' %> class="cover-scope-radio" data-partial-target="plastik-partial-wrapper" <%= isReadOnly ? 'disabled' : '' %>>
+                      <span>Sebagian Dicover</span>
+                    </label>
+                  </div>
+                  <div id="plastik-partial-wrapper" class="<%= plastikAttr.cover_scope === 'partial' ? '' : 'hidden' %>">
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Kursi yang Dicover <span class="text-red-500">*</span></label>
+                    <input type="number" id="plastik_cover_qty" name="plastik_cover_qty" min="1" placeholder="Jumlah cover (maksimal sesuai unit)" value="<%= plastikAttr.cover_qty || '' %>" class="w-full sm:w-60 px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan Plastik <span class="text-red-500">*</span></label>
+                  <input type="text" name="plastik_notes" placeholder="Warna cover atau catatan peletakan" value="<%= plastikItem ? plastikItem.notes : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+                </div>
+              </div>
+            </div>
+
+            <!-- C. Sofa VIP -->
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded space-y-3">
+              <label class="inline-flex items-center space-x-2 font-semibold text-stone-800 cursor-pointer">
+                <input type="checkbox" name="kursi_sofa_check" value="1" <%= sofaItem ? 'checked' : '' %> class="kursi-sub-toggle" data-target="sub-sofa" <%= isReadOnly ? 'disabled' : '' %>>
+                <span>C. Sofa (VIP)</span>
+              </label>
+
+              <div id="sub-sofa" class="<%= sofaItem ? '' : 'hidden' %> space-y-3 pl-4 border-l-2 border-stone-300">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Unit / Seater <span class="text-red-500">*</span></label>
+                    <input type="number" name="sofa_qty" min="1" placeholder="Misal: 4" value="<%= sofaItem ? sofaItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                  </div>
+                  <div>
+                    <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan Sofa <span class="text-red-500">*</span></label>
+                    <input type="text" name="sofa_notes" placeholder="Single seater / double seater, warna hitam/putih" value="<%= sofaItem ? sofaItem.notes : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 7. MEJA (MULTI-BENTUK: MEJA BULAT & MEJA KOTAK) -->
+        <% 
+          const bulatItem = getItem('meja_bulat'); 
+          const kotakItem = getItem('meja_kotak'); 
+          const hasAnyMeja = Boolean(bulatItem || kotakItem);
+        %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_meja" value="1" <%= hasAnyMeja ? 'checked' : '' %> class="cat-toggle" data-target="body-meja" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">7. Meja (Multi-Bentuk: Bulat / Kotak)</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Tables & Catering</span>
+          </div>
+          <div id="body-meja" class="p-4 bg-white <%= hasAnyMeja ? '' : 'hidden' %> space-y-4 text-xs">
+            <p class="text-stone-500 text-[11px]">Anda dapat memilih meja bulat, meja kotak, atau keduanya:</p>
+
+            <!-- A. Meja Bulat -->
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded space-y-2">
+              <label class="inline-flex items-center space-x-2 font-semibold text-stone-800 cursor-pointer">
+                <input type="checkbox" name="meja_bulat_check" value="1" <%= bulatItem ? 'checked' : '' %> class="meja-sub-toggle" data-target="sub-bulat" <%= isReadOnly ? 'disabled' : '' %>>
+                <span>A. Meja Bulat (Round Table)</span>
+              </label>
+              <div id="sub-bulat" class="<%= bulatItem ? '' : 'hidden' %> grid grid-cols-1 sm:grid-cols-2 gap-3 pl-4 border-l-2 border-stone-300 pt-1">
+                <div>
+                  <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Unit <span class="text-red-500">*</span></label>
+                  <input type="number" name="meja_bulat_qty" min="1" placeholder="Misal: 10" value="<%= bulatItem ? bulatItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                </div>
+                <div>
+                  <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan <span class="text-red-500">*</span></label>
+                  <input type="text" name="meja_bulat_notes" placeholder="Diameter 120cm/160cm, taplak skirting" value="<%= bulatItem ? bulatItem.notes : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+                </div>
+              </div>
+            </div>
+
+            <!-- B. Meja Kotak -->
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded space-y-2">
+              <label class="inline-flex items-center space-x-2 font-semibold text-stone-800 cursor-pointer">
+                <input type="checkbox" name="meja_kotak_check" value="1" <%= kotakItem ? 'checked' : '' %> class="meja-sub-toggle" data-target="sub-kotak" <%= isReadOnly ? 'disabled' : '' %>>
+                <span>B. Meja Kotak (Long Table / Persegi)</span>
+              </label>
+              <div id="sub-kotak" class="<%= kotakItem ? '' : 'hidden' %> grid grid-cols-1 sm:grid-cols-2 gap-3 pl-4 border-l-2 border-stone-300 pt-1">
+                <div>
+                  <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah Unit <span class="text-red-500">*</span></label>
+                  <input type="number" name="meja_kotak_qty" min="1" placeholder="Misal: 15" value="<%= kotakItem ? kotakItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-mono" <%= isReadOnly ? 'readonly' : '' %>>
+                </div>
+                <div>
+                  <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan <span class="text-red-500">*</span></label>
+                  <input type="text" name="meja_kotak_notes" placeholder="Ukuran meja prasmanan / pendaftaran, warna taplak" value="<%= kotakItem ? kotakItem.notes : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 8. LIGHTING -->
+        <% const lightItem = getItem('lighting'); const lightAttr = lightItem && lightItem.attributes ? lightItem.attributes : {}; %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_lighting" value="1" <%= lightItem ? 'checked' : '' %> class="cat-toggle" data-target="body-lighting" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">8. Lighting</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Stage Illumination</span>
+          </div>
+          <div id="body-lighting" class="p-4 bg-white <%= lightItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah / Paket <span class="text-red-500">*</span></label>
+                <input type="text" name="lighting_qty" placeholder="Misal: 1 Set - Par LED & Moving Head Beam" value="<%= lightItem ? lightItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+              </div>
+              <div>
+                <label class="block font-semibold uppercase text-stone-700 mb-1">Include Genset? <span class="text-red-500">*</span></label>
+                <select name="lighting_genset" class="w-full px-3 py-2 border border-stone-300 rounded" <%= isReadOnly ? 'disabled' : '' %>>
+                  <option value="Tidak" <%= lightAttr.include_genset === false || lightAttr.include_genset === 'Tidak' ? 'selected' : '' %>>Tidak</option>
+                  <option value="Ya" <%= lightAttr.include_genset === true || lightAttr.include_genset === 'Ya' ? 'selected' : '' %>>Ya (Include Genset Lighting)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="lighting_notes" rows="2" placeholder="Catatan: DMX console, follow spot, smoke machine, hazer" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= lightItem ? lightItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 9. BARRIKADE -->
+        <% const barrikadeItem = getItem('barrikade'); %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_barrikade" value="1" <%= barrikadeItem ? 'checked' : '' %> class="cat-toggle" data-target="body-barrikade" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">9. Barrikade</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Crowd Control</span>
+          </div>
+          <div id="body-barrikade" class="p-4 bg-white <%= barrikadeItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Jumlah Unit / Panjang Meter <span class="text-red-500">*</span></label>
+              <input type="text" name="barrikade_qty" placeholder="Misal: 25 Pcs / 50 Meter" value="<%= barrikadeItem ? barrikadeItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="barrikade_notes" rows="2" placeholder="Catatan: pagar barrikade besi BRC / barrier mojo / pembatas antrian FOH" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= barrikadeItem ? barrikadeItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10. GENSET (STANDALONE / TERPISAH) -->
+        <% const gensetItem = getItem('genset'); %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_genset" value="1" <%= gensetItem ? 'checked' : '' %> class="cat-toggle" data-target="body-genset" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">10. Genset (Standalone / Terpisah)</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Power Supply</span>
+          </div>
+          <div id="body-genset" class="p-4 bg-white <%= gensetItem ? '' : 'hidden' %> space-y-3.5 text-xs">
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Kapasitas (kVA) & Jumlah Unit <span class="text-red-500">*</span></label>
+              <input type="text" name="genset_qty" placeholder="Misal: 1 Unit - 60 kVA Silent" value="<%= gensetItem ? gensetItem.qty_text : '' %>" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>>
+            </div>
+            <div>
+              <label class="block font-semibold uppercase text-stone-700 mb-1">Keterangan Teknis <span class="text-red-500">*</span></label>
+              <textarea name="genset_notes" rows="2" placeholder="Catatan: durasi standby, include BBM / non BBM, panjang kabel induk meter" class="w-full px-3 py-2 border border-stone-300 rounded font-sans" <%= isReadOnly ? 'readonly' : '' %>><%= gensetItem ? gensetItem.notes : '' %></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 11. LAIN-LAIN (DYNAMIC REPEATER) -->
+        <% 
+          const customItems = getItems('lain_lain');
+          const allowCustom = !(link.settings && link.settings.allow_custom_items === false);
+        %>
+        <div class="border border-stone-300 rounded overflow-hidden">
+          <div class="bg-stone-50 px-4 py-3 flex items-center justify-between border-b border-stone-200">
+            <label class="inline-flex items-center space-x-2.5 cursor-pointer">
+              <input type="checkbox" name="cat_lain_lain" value="1" <%= customItems.length > 0 ? 'checked' : '' %> class="cat-toggle" data-target="body-lain" <%= isReadOnly ? 'disabled' : '' %>>
+              <span class="font-bold text-xs uppercase tracking-wider text-stone-900">11. Lain-lain (Custom Equipment)</span>
+            </label>
+            <span class="text-[11px] font-mono text-stone-500">Additional Requests</span>
+          </div>
+
+          <div id="body-lain" class="p-4 bg-white <%= customItems.length > 0 ? '' : 'hidden' %> space-y-3 text-xs">
+            <% if (!allowCustom) { %>
+              <div class="p-3 bg-stone-100 border border-stone-200 text-stone-600 rounded">
+                Admin menonaktifkan penambahan item kustom untuk link ini.
+              </div>
+            <% } else { %>
+              <div id="custom-items-container" class="space-y-3">
+                <% if (customItems.length === 0) { %>
+                  <!-- Initial empty row if editable -->
+                  <% if (!isReadOnly) { %>
+                    <div class="custom-item-row p-3 bg-stone-50 border border-stone-200 rounded grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      <div class="sm:col-span-4">
+                        <label class="block font-semibold uppercase text-stone-600 mb-1">Nama Perlengkapan <span class="text-red-500">*</span></label>
+                        <input type="text" name="custom_name[]" placeholder="Misal: Misty Fan / Kipas Embun" class="w-full px-2.5 py-1.5 border border-stone-300 rounded">
+                      </div>
+                      <div class="sm:col-span-3">
+                        <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah & Satuan <span class="text-red-500">*</span></label>
+                        <input type="text" name="custom_qty[]" placeholder="Misal: 4 Unit" class="w-full px-2.5 py-1.5 border border-stone-300 rounded">
+                      </div>
+                      <div class="sm:col-span-4">
+                        <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan <span class="text-red-500">*</span></label>
+                        <input type="text" name="custom_notes[]" placeholder="Catatan teknis" class="w-full px-2.5 py-1.5 border border-stone-300 rounded">
+                      </div>
+                      <div class="sm:col-span-1 pt-6 text-center">
+                        <button type="button" class="btn-remove-custom text-stone-400 hover:text-red-600">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                      </div>
+                    </div>
+                  <% } %>
+                <% } else { %>
+                  <% customItems.forEach(cItem => { %>
+                    <div class="custom-item-row p-3 bg-stone-50 border border-stone-200 rounded grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                      <div class="sm:col-span-4">
+                        <label class="block font-semibold uppercase text-stone-600 mb-1">Nama Perlengkapan <span class="text-red-500">*</span></label>
+                        <input type="text" name="custom_name[]" value="<%= cItem.item_label %>" class="w-full px-2.5 py-1.5 border border-stone-300 rounded" <%= isReadOnly ? 'readonly' : '' %>>
+                      </div>
+                      <div class="sm:col-span-3">
+                        <label class="block font-semibold uppercase text-stone-600 mb-1">Jumlah & Satuan <span class="text-red-500">*</span></label>
+                        <input type="text" name="custom_qty[]" value="<%= cItem.qty_text %>" class="w-full px-2.5 py-1.5 border border-stone-300 rounded" <%= isReadOnly ? 'readonly' : '' %>>
+                      </div>
+                      <div class="sm:col-span-4">
+                        <label class="block font-semibold uppercase text-stone-600 mb-1">Keterangan <span class="text-red-500">*</span></label>
+                        <input type="text" name="custom_notes[]" value="<%= cItem.notes %>" class="w-full px-2.5 py-1.5 border border-stone-300 rounded" <%= isReadOnly ? 'readonly' : '' %>>
+                      </div>
+                      <% if (!isReadOnly) { %>
+                        <div class="sm:col-span-1 pt-6 text-center">
+                          <button type="button" class="btn-remove-custom text-stone-400 hover:text-red-600">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                        </div>
+                      <% } %>
+                    </div>
+                  <% }); %>
+                <% } %>
+              </div>
+
+              <% if (!isReadOnly) { %>
+                <button type="button" id="btn-add-custom-item" class="mt-2 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-medium px-3 py-1.5 rounded transition inline-flex items-center space-x-1.5">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>+ Tambah Perlengkapan Lainnya</span>
+                </button>
+              <% } %>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SYARAT & KETENTUAN + TOMBOL SUBMIT -->
+    <!-- ========================================== -->
+    <% if (!isReadOnly) { %>
+      <section class="tech-sheet p-6 bg-white border border-stone-300 rounded space-y-4">
+        <% const requireTerms = !(link.settings && link.settings.require_terms_agreement === false); %>
+        <% if (requireTerms) { %>
+          <div class="flex items-start space-x-2.5">
+            <input type="checkbox" id="terms-agree" name="terms_agreement" required class="mt-1">
+            <label for="terms-agree" class="text-xs text-stone-700 cursor-pointer select-none leading-relaxed">
+              Saya menyatakan bahwa rincian jadwal dan daftar spesifikasi perlengkapan di atas adalah benar. Pemesanan ini mengikat sesuai ketentuan teknis vendor produksi event.
+            </label>
+          </div>
+        <% } %>
+
+        <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-stone-200">
+          <span class="text-xs text-stone-500 font-mono">
+            Pastikan seluruh data terisi lengkap sebelum mengirim.
+          </span>
+          <button 
+            type="submit" 
+            id="btn-submit-form"
+            class="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm px-6 py-2.5 rounded transition flex items-center justify-center space-x-2 shadow-sm <%= requireTerms ? 'opacity-50 pointer-events-none' : '' %>"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span>Kirim & Simpan Lembar Pemesanan</span>
+          </button>
+        </div>
+      </section>
+    <% } %>
+
+  </form>
+</div>
+
+<!-- Client Form Interactive Script -->
+<script src="/js/bookingForm.js"></script>
+
+<%- include('../partials/footer') %>

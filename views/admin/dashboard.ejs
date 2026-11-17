@@ -1,0 +1,230 @@
+<%- include('../partials/header', { title: 'Dashboard Admin', isAdmin: true }) %>
+
+<div class="max-w-6xl mx-auto px-4 py-8 sm:py-10">
+  
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div>
+      <div class="flex items-center space-x-2 text-xs font-mono text-stone-500 mb-1">
+        <span>ADMIN CONSOLE</span>
+        <span>&bull;</span>
+        <span class="text-amber-700 font-bold">LINK & MANIFEST OVERVIEW</span>
+      </div>
+      <h1 class="text-2xl font-bold text-stone-900 tracking-tight">Daftar Link Pemesanan Perlengkapan</h1>
+      <p class="text-xs text-stone-600 mt-1">Kelola link pemesanan per-klien, pantau durasi akumulasi, dan cetak manifest teknis.</p>
+    </div>
+
+    <div>
+      <a href="/admin/create-link" class="bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs px-4 py-2.5 rounded transition inline-flex items-center space-x-2 shadow-sm">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Buat Link Booking Baru</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Summary Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="tech-sheet p-4 bg-white border border-stone-300 rounded">
+      <span class="text-[11px] font-mono text-stone-500 uppercase tracking-wider block">Total Link</span>
+      <span class="text-2xl font-bold font-mono text-stone-900 mt-1 block"><%= metrics.total %></span>
+      <span class="text-[11px] text-stone-400 mt-0.5 block">Semua link terdaftar</span>
+    </div>
+
+    <div class="tech-sheet p-4 bg-white border border-stone-300 rounded">
+      <span class="text-[11px] font-mono text-amber-700 uppercase tracking-wider block">Menunggu Submit</span>
+      <span class="text-2xl font-bold font-mono text-amber-700 mt-1 block"><%= metrics.pending %></span>
+      <span class="text-[11px] text-stone-400 mt-0.5 block">Belum diisi klien</span>
+    </div>
+
+    <div class="tech-sheet p-4 bg-white border border-stone-300 rounded">
+      <span class="text-[11px] font-mono text-emerald-700 uppercase tracking-wider block">Terkirim / Revisi</span>
+      <span class="text-2xl font-bold font-mono text-emerald-700 mt-1 block"><%= metrics.submitted %></span>
+      <span class="text-[11px] text-stone-400 mt-0.5 block">Siap diproses / manifest</span>
+    </div>
+
+    <div class="tech-sheet p-4 bg-white border border-stone-300 rounded">
+      <span class="text-[11px] font-mono text-red-700 uppercase tracking-wider block">Terkunci / Expired</span>
+      <span class="text-2xl font-bold font-mono text-red-700 mt-1 block"><%= metrics.locked %></span>
+      <span class="text-[11px] text-stone-400 mt-0.5 block">Read-only / kedaluwarsa</span>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="tech-sheet bg-white border border-stone-300 rounded overflow-hidden">
+    <div class="px-5 py-4 border-b border-stone-200 flex items-center justify-between">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-stone-800">Daftar Link & Status Produksi</h2>
+      <span class="text-xs font-mono text-stone-500"><%= links.length %> Link Ditemukan</span>
+    </div>
+
+    <% if (links.length === 0) { %>
+      <div class="p-12 text-center">
+        <svg class="w-10 h-10 text-stone-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <p class="text-sm font-semibold text-stone-700">Belum Ada Link Pemesanan</p>
+        <p class="text-xs text-stone-500 mt-1">Silakan klik tombol "Buat Link Booking Baru" di atas untuk membuat link pertama.</p>
+      </div>
+    <% } else { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse tech-table text-xs">
+          <thead>
+            <tr>
+              <th class="py-3 px-4">Kode / Link</th>
+              <th class="py-3 px-4">Klien & Acara</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Jadwal & Durasi</th>
+              <th class="py-3 px-4">Kontrol Edit</th>
+              <th class="py-3 px-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-200">
+            <% links.forEach(link => { %>
+              <tr class="hover:bg-stone-50 transition">
+                <!-- Kode / Link -->
+                <td class="py-3.5 px-4 font-mono">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <%= link.hash_code %>
+                    </span>
+                    <a href="/?user=<%= link.hash_code %>" target="_blank" title="Buka Link Form" class="text-stone-400 hover:text-stone-700">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </a>
+                  </div>
+                  <span class="text-[10px] text-stone-400 block mt-1">Submissions: <%= link.submission_count %><%= link.max_submissions > 0 ? '/' + link.max_submissions : '' %></span>
+                </td>
+
+                <!-- Klien & Acara -->
+                <td class="py-3.5 px-4">
+                  <strong class="text-stone-900 block text-xs"><%= link.client_name %></strong>
+                  <% if (link.event_name) { %>
+                    <span class="text-stone-600 block text-[11px]"><%= link.event_name %></span>
+                  <% } %>
+                  <% if (link.client_phone) { %>
+                    <span class="text-stone-400 font-mono text-[10px] block mt-0.5"><%= link.client_phone %></span>
+                  <% } %>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="py-3.5 px-4 font-mono">
+                  <% if (link.is_locked) { %>
+                    <span class="inline-flex items-center space-x-1 text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded text-[11px]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                      <span>LOCKED</span>
+                    </span>
+                  <% } else if (link.isExpired) { %>
+                    <span class="inline-flex items-center space-x-1 text-stone-600 bg-stone-100 border border-stone-300 px-2 py-0.5 rounded text-[11px]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-stone-400"></span>
+                      <span>EXPIRED</span>
+                    </span>
+                  <% } else if (link.status === 'submitted' || link.status === 'revised') { %>
+                    <span class="inline-flex items-center space-x-1 text-emerald-800 bg-emerald-50 border border-emerald-300 px-2 py-0.5 rounded text-[11px]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                      <span><%= link.status.toUpperCase() %></span>
+                    </span>
+                  <% } else { %>
+                    <span class="inline-flex items-center space-x-1 text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded text-[11px]">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span>PENDING</span>
+                    </span>
+                  <% } %>
+                </td>
+
+                <!-- Jadwal & Durasi -->
+                <td class="py-3.5 px-4 font-mono text-[11px]">
+                  <% if (link.scheduleSummary && link.scheduleSummary.totalDays > 0) { %>
+                    <span class="font-bold text-stone-800 block">
+                      <%= link.scheduleSummary.totalDays %> Hari
+                    </span>
+                    <span class="text-amber-700 block">
+                      Total: <%= link.scheduleSummary.totalHoursHuman %>
+                    </span>
+                  <% } else { %>
+                    <span class="text-stone-400 italic">Belum diisi</span>
+                  <% } %>
+                </td>
+
+                <!-- Kontrol Edit & Lock Toggle -->
+                <td class="py-3.5 px-4 text-[11px]">
+                  <div class="flex items-center space-x-2">
+                    <button 
+                      type="button" 
+                      class="btn-toggle-lock px-2 py-1 rounded font-mono text-[10px] border transition <%= link.is_locked ? 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100' : 'bg-stone-100 text-stone-700 border-stone-300 hover:bg-stone-200' %>"
+                      data-id="<%= link.id %>"
+                      data-locked="<%= link.is_locked ? '1' : '0' %>"
+                    >
+                      <%= link.is_locked ? 'Unlock Form' : 'Lock Form' %>
+                    </button>
+                    <span class="text-stone-400 font-mono text-[10px]">
+                      <%= link.allow_edit ? 'Allow Edit' : '1x Submit' %>
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Action Buttons -->
+                <td class="py-3.5 px-4 text-right space-x-1 font-sans whitespace-nowrap">
+                  <!-- Detail & Manifest -->
+                  <a href="/admin/detail/<%= link.id %>" class="inline-flex items-center space-x-1 bg-stone-900 hover:bg-stone-800 text-white px-2.5 py-1.5 rounded text-[11px] font-medium transition">
+                    <svg class="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Detail / SPK</span>
+                  </a>
+
+                  <!-- Copy WhatsApp Invitation -->
+                  <button 
+                    type="button" 
+                    class="btn-copy-wa inline-flex items-center space-x-1 bg-emerald-700 hover:bg-emerald-800 text-white px-2.5 py-1.5 rounded text-[11px] font-medium transition"
+                    data-hash="<%= link.hash_code %>"
+                    data-client="<%= link.client_name %>"
+                    data-event="<%= link.event_name || 'Event Booking' %>"
+                    data-phone="<%= link.client_phone || '' %>"
+                    title="Salin Pesan Undangan WhatsApp"
+                  >
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    <span>Salin WA</span>
+                  </button>
+
+                  <!-- Delete -->
+                  <form action="/admin/delete-link/<%= link.id %>" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus link pemesanan ini? Seluruh data jadwal dan item akan terhapus.');">
+                    <button type="submit" class="text-stone-400 hover:text-red-600 p-1 rounded" title="Hapus Link">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal for WhatsApp Invitation Text Display -->
+<div id="wa-modal" class="fixed inset-0 bg-stone-900 bg-opacity-60 z-50 flex items-center justify-center p-4 hidden">
+  <div class="tech-sheet bg-white border border-stone-300 rounded max-w-lg w-full p-6">
+    <div class="flex items-center justify-between pb-3 border-b border-stone-200 mb-4">
+      <div class="flex items-center space-x-2">
+        <svg class="w-5 h-5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        <h3 class="text-sm font-bold text-stone-900 uppercase">Teks Undangan WhatsApp</h3>
+      </div>
+      <button type="button" id="btn-close-wa-modal" class="text-stone-400 hover:text-stone-700">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <textarea id="wa-text-area" rows="8" readonly class="w-full p-3 font-mono text-xs border border-stone-300 rounded bg-stone-50 text-stone-800 select-all"></textarea>
+
+    <div class="mt-4 flex items-center justify-between">
+      <span id="wa-copied-status" class="text-xs text-emerald-700 font-semibold opacity-0 transition-opacity">Teks berhasil disalin ke clipboard!</span>
+      <div class="flex space-x-2">
+        <button type="button" id="btn-copy-clipboard" class="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium px-4 py-2 rounded transition">
+          Salin ke Clipboard
+        </button>
+        <a id="btn-open-wa" href="#" target="_blank" class="bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium px-4 py-2 rounded transition">
+          Buka WhatsApp Web
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/adminDashboard.js"></script>
+
+<%- include('../partials/footer') %>
